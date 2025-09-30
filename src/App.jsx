@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
+import classNames from 'classnames';
 import './App.scss';
 
 const goodsFromServer = [
@@ -15,31 +16,29 @@ const goodsFromServer = [
 ];
 
 export const App = () => {
-  const [sortBy, setSortBy] = useState(null);
+  const [sortBy, setSortBy] = useState(null); 
   const [isReversed, setIsReversed] = useState(false);
 
-  const displayed = useMemo(() => {
-    const result = [...goodsFromServer];
+  let visibleGoods = [...goodsFromServer];
 
-    if (sortBy === 'alpha') {
-      result.sort((a, b) => a.localeCompare(b));
-    } else if (sortBy === 'length') {
-      result.sort((a, b) => a.length - b.length || a.localeCompare(b));
-    }
+  switch (sortBy) {
+    case 'alpha':
+      visibleGoods.sort((a, b) => a.localeCompare(b));
+      break;
 
-    if (isReversed) {
-      result.reverse();
-    }
+    case 'length':
+      visibleGoods.sort(
+        (a, b) => (a.length - b.length) || a.localeCompare(b),
+      );
+      break;
 
-    return result;
-  }, [sortBy, isReversed]);
+    default:
+      break;
+  }
 
-  const isInitialOrder = useMemo(() => {
-    return (
-      displayed.length === goodsFromServer.length &&
-      displayed.every((g, i) => g === goodsFromServer[i])
-    );
-  }, [displayed]);
+  if (isReversed) {
+    visibleGoods.reverse();
+  }
 
   return (
     <main className="section container">
@@ -48,7 +47,9 @@ export const App = () => {
       <div className="buttons">
         <button
           type="button"
-          className={`button is-info ${sortBy === 'alpha' ? '' : 'is-light'}`}
+          className={classNames('button', 'is-info', {
+            'is-light': sortBy !== 'alpha',
+          })}
           onClick={() => setSortBy('alpha')}
           data-cy="SortByName"
         >
@@ -57,7 +58,9 @@ export const App = () => {
 
         <button
           type="button"
-          className={`button is-success ${sortBy === 'length' ? '' : 'is-light'}`}
+          className={classNames('button', 'is-success', {
+            'is-light': sortBy !== 'length',
+          })}
           onClick={() => setSortBy('length')}
           data-cy="SortByLength"
         >
@@ -66,17 +69,19 @@ export const App = () => {
 
         <button
           type="button"
-          className={`button is-warning ${isReversed ? '' : 'is-light'}`}
+          className={classNames('button', 'is-warning', {
+            'is-light': !isReversed,
+          })}
           onClick={() => setIsReversed(prev => !prev)}
           data-cy="Reverse"
         >
           Reverse
         </button>
 
-        {!isInitialOrder && (
+        {(sortBy !== null || isReversed) && (
           <button
             type="button"
-            className="button is-danger is-light"
+            className={classNames('button', 'is-danger', 'is-light')}
             onClick={() => {
               setSortBy(null);
               setIsReversed(false);
@@ -89,7 +94,7 @@ export const App = () => {
       </div>
 
       <ul className="content" data-cy="GoodsList">
-        {displayed.map(good => (
+        {visibleGoods.map(good => (
           <li key={good} data-cy="Good">
             {good}
           </li>
